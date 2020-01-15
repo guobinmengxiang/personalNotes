@@ -3,7 +3,7 @@ package algorithm;
 public class algs {
 
 	public static void main(String[] args) {
-	printing1("*",5);
+		printing2(35,94);
 
 	}
 	/**
@@ -40,13 +40,21 @@ public class algs {
 		}
 	}
 	
-	public static void printing2(String str,int str1){
-		for(int i=1;i<=str1;i++){
-			for(int j=i;j<=str1;j++){
-				System.out.print(" ");		
-		System.out.print(str);
-		}
-			System.out.println(" ");
-		}
+	/**
+	 * 穷举法
+	 * 鸡兔同笼搞基问题
+	 * @param 动物总数量
+	 * @param 多少只脚
+	 */
+	public static void printing2(int str,int str1){
+	   int ji=0;
+	   int tu=0;
+	   for(int i=1;i<str;i++){
+		  if(2*i+(35-i)*4==str1){
+			  ji=i;tu=35-i;
+			  System.out.println("ji"+ji+",,tu"+tu);
+			  break;
+		  }
+	   }
 	}
 }
