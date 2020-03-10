@@ -1,0 +1,110 @@
+start() 和 run() 之间的区别
+start() 函数启动线程执行以下任务：
+它统计了一个新线程
+线程从 New State 移动到 Runnable 状态。
+当线程有机会执行时，它的目标 run() 方法将运行。
+start() 方法不能多次重复调用，否则抛出 java.lang.IllegalStateException 异常；
+
+start() 函数用来启动线程，真正实现了多线程运行。这时无需等待 run 方法体代码执行完毕，
+可以直接继续执行下面的代码；通过调用 Thread 类的 start() 方法来启动一个线程， 
+这时此线程是处于就绪状态， 并没有运行。 然后通过此 Thread 类调用方法 run() 来完成其运行操作的，
+ 这里方法 run() 称为线程体，它包含了要执行的这个线程的内容。 Run 方法运行结束，
+  此线程终止。然后 CPU 再调度其它线程。
+  
+run() 函数启动：
+线程类的 run() 方法是 Runnable 接口的一个抽象函数，由 java 虚拟机直接调用的，不会创建的新线程。所以可以被多次调用，因为它只是一个抽象函数。
+run() 函数只是类的一个普通函数而已，如果直接调用 run 方法，程序中依然只有主线程这一个线程，
+其程序执行路径还是只有一条，还是要顺序执行，还是要等待 run 方法体执行完毕后才可继续执行下面的代码，
+这样就没有达到写线程的目的。
+
+
+java.lang.IllegalStateException 异常；
+指无效状态异常，在不合理或不正确时间内唤醒一方法时出现的异常信息。
+一个线程不能调用多次start()方法，多个线程可以；
+for(int i=0;i<2;i++)
+Thread t=new Thread();
+t.start();
+以上不会抛出异常；
+把创建线程放到循环之上会抛异常，但是执行t.run()不会抛出异常；由此证明.run只是一个普通的函数，start才是真正意义上创建了多线程
+
+用synchronized 解决实例共享的安全问题
+
+线程的活跃与休眠
+isAlive() 函数可判断当前线程是否处于活跃状态。
+一个线程在 new 出来之后，处于非活跃状态，而在运行中与结束后，都属于活跃状态
+sleep() 函数的作用是指定的毫秒内让 当前执行的线程 休眠（停止运行）。
+通常在一个正在结束的线程后面使用 sleep() 的话，
+可以更正确的展示出 isAlived() 函数的作用。并且可以相对释放性能资源。
+线程的六种状态
+ * 新建Thread.State.NEW（Thread.State.NEW 指尚未启动的线程的线程状态。） 
+ * new Thread() 之后还没 start () 的时候即是 Thread.State.NEW 状态。
+ * 可运行：Thread.State.RUNNABLE 可运行线程的线程状态。处于可运行状态的线程正在 Java 虚拟机中执行，
+ * 但它可能正在等待来自操作系统（如处理器）的其他资源。几乎所有运行、运行中都在使用这个状态。
+ *阻塞：Thread.State.BLOCKED 等待监视器锁定时被阻止的线程的线程状态。
+ *处于阻塞状态的线程正在等待监视器锁进入同步块 / 方法或在调用后重新输入同步块 / 方法
+ *用 synchronized 同步锁，锁住该线程之后，其它线程等待这个线程时的等待状态。阻塞状态属于多线程开发中最重要的状态。
+ *其中Socket 的 serverSocket.accept() ， netty 中的 IO 多路复用技术，都是采取阻塞 Thread.State.BLOCKED 机制进行设计的。
+ *等待：Thread.State.WAITING 指等待线程的线程状态。由于调用以下方法之一，线程处于等待状态：
+ *Object.wait()、 Thread.join() LockSupport#park()
+ *处于等待状态的线程正在等待另一个线程执行特定操作。例如，对某个对象调用了 Object.wait() 
+ *的线程正在等待另一个线程对该对象调用 Object.notify() 或 Object.notifyAll() 。调
+ *用了 thread.join() 的线程正在等待指定线程终止。 
+ *计时等待：Thread.State.TIMED_WAITING 具有指定等待时间的等待线程的线程状态。由于使用指定的正等待时间调用以下方法之一，线程处于定时等待状态
+ *Thread.sleep() Object#wait(long) Thread#join(long) LockSupport#parkNanos LockSupport#parkUntil
+ *终止：Thread.State.TERMINATED 线程已执行完成	
+ 
+ synchronized 与 static synchronized 之间的区别
+ synchronized 是实例锁（锁在某一个实例对象上，如果该类是单例，那么该锁也具有全局锁的概念）
+ static synchronized 是全局锁（该锁针对的是类，无论实例多少个对象，那么线程都共享该锁）。
+ synchronized 是对类的当前实例（当前对象）进行加锁，防止其他线程同时访问该类的该实例的所有 synchronized 块，注意这里是“类的当前实例”， 类的两个不同实例就没有这种约束了。
+ 那么 static synchronized 恰好就是要控制类的所有实例的并发访问，static synchronized 是限制多线程中该类的所有实例同时访问 jvm 中该类所对应的代码块 	
+ static synchronized 的效率很低，全局情况下每个线程都需要进行等待
+ 
+ synchronized 的三种用法
+ 修饰实例方法、修饰静态方法、修饰代码块
+ 所谓的实例对象锁就是用 synchronized 修饰实例对象中的实例方法，注意是实例方法不包括静态方法
+ public synchronized void myMethod(){}
+ 当 synchronized 作用于静态方法时，其锁就是当前类的 class 对象锁。
+ 由于静态成员不专属于任何一个实例对象，是类成员，因此通过 class 对象锁可以控制静态成员的并发操作。
+ 需要注意的是如果一个线程 A 调用一个实例对象的非 static synchronized 方法，
+ 而线程 B 需要调用这个实例对象所属类的静态 synchronized 方法，是允许的，不会发生互斥现象，
+ 因为访问静态 synchronized 方法占用的锁是当前类的 class 对象，
+ 而访问非静态 synchronized 方法占用的锁是当前实例对象锁，二者的锁并不一样，所以不冲突，
+ public static synchronized void myMethod(){
+
+}
+在某些情况下，我们编写的方法体可能比较大，同时存在一些比较耗时的操作，而需要同步的代码又只有一小部分，
+如果直接对整个方法进行同步操作，可能会得不偿失，此时我们可以使用同步代码块的方法对需要同步的代码进行包裹，
+这样就无需对整个方法进行同步操作了，锁的对象是变量代码。
+
+sleep() 是 Thread 类的函数，导致此线程暂停执行指定时间，给其他线程执行机会，但是依然保持着监控状态，
+过了指定时间会自动恢复，调用 sleep() 方法不会释放锁对象。当调用 sleep 方法后，当前线程进入阻塞状态。
+目的是让出 CPU 给其他线程运行的机会。但是由于 sleep() 方法不会释放锁对象，所以在一个同步代码块中调用这个方法后，
+线程虽然休眠了，但其他线程无法访问它的锁对象。这是因为 sleep() 方法拥有 CPU 的执行权，它可以自动醒来无需唤醒。
+而当 sleep() 结束指定休眠时间后，这个线程不一定立即执行，因为此时其他线程可能正在运行
+wait() 方法是 Object 类里的方法，当一个线程执行到 wait() 方法时，它就进入到一个和该对象相关的等待池中，
+同时释放了锁对象，等待期间可以调用里面的同步方法，其他线程可以访问，等待时不拥有 CPU 的执行权，
+否则其他线程无法获取执行权。当一个线程执行了 wait() 方法后，必须调用 notify 或者 notifyAll 方法才能唤醒，
+而且是随机唤醒，若是被其他线程抢到了 CPU 执行权，该线程会继续进入等待状态。由于锁对象可以是任意对象，
+所以 wait() 方法必须定义在 Object 类中，因为 Obeject 类是所有类的基类。
+sleep() 是静态方法，也就是说它只对当前对象有效。通过 对象名.sleep() 想让该对象线程进入休眠是无效的，它只会让当前线程进入休眠。
+wait 、 notify 和 notifyAll 方法只能在同步方法或者同步代码块中使用，而 sleep 方法可以在任何地方使用。
+其实两者的区别都是让线程暂停运行一段时间，但本质的区别：sleep() 是线程的运行状态控制,wait() 是线程间的通信。
+
+线程的停止
+当线程呈现 wait() 状态时，调用线程对象的 interrupt() 方法会出现 InterruptedException 异常。
+
+线程的优先级
+JDK 中常使用三个预定义的常量来控制线程的优先级
+public final static int MIN_PRIORITY = 1;
+public final static int NORM_PRIORITY = 5;
+public final static int MAX_PRIORITY = 10;
+线程的优先级一共划分为 1 ~ 10 的十个等级，如果小于 1 或者大于 10 的情况下，JDK 会抛出异常 throw new IllegalArgumentException()。
+线程的优先级具备继承的特性，比如 A 线程启动 B 线程，则 B 线程的优先级与 A 线程的是一样的。
+守护线程：
+守护线程也叫保护线程、保护性线程。在 java 世界中 java 的线程主要分为两种线程，一种是用户线程，另外一种即是守护线程。
+守护线程即是一种特殊的线程 （ Daemon ） ，当进程中不存在用户线程后，则守护线程即会自动销毁。java 的垃圾回收线程也是守护线程之一。
+用户也可以自行设置自身的某一线程为守护线程 ， Thread.setDeamon(true);
+
+yield() 函数的作用是放弃当前的 CPU 资源，将当前资源让给其它的任务去占用 CPU 执行时间，但是放弃的时间并不确定，有可能刚刚放弃 CPU 资源，马上又捡起 CPU 资源进行使用。
+
